@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For You</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* --- RESET & BASICS --- */
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #fce4ec; /* Very soft pink base */
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* --- THE WRAPPER --- */
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            font-family: 'Playfair Display', serif;
+            color: #d81b60;
+            font-size: 3rem;
+            margin-bottom: 10px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1s ease;
+        }
+
+        p {
+            color: #880e4f;
+            font-size: 1.1rem;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1s ease 0.3s;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        /* --- BUTTON --- */
+        .btn-open {
+            background: #d81b60;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(216, 27, 96, 0.3);
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: 1px;
+            margin-top: 20px;
+        }
+
+        .btn-open:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(216, 27, 96, 0.4);
+            background: #ad1457;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- THE CSS FLOWER --- */
+        /* This draws the flower using code, no images */
+        .flower-wrapper {
+            position: relative;
+            width: 200px;
+            height: 300px;
+            display: none; /* Hidden initially */
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .stem {
+            width: 8px;
+            height: 0; /* Grows to 200px */
+            background: linear-gradient(to right, #4caf50, #2e7d32);
+            border-radius: 4px;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: growStem 1.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+
+        .leaf {
+            position: absolute;
+            width: 40px;
+            height: 20px;
+            background: #4caf50;
+            border-radius: 0 40px 0 40px;
+            bottom: 60px;
+            left: 50%;
+            transform-origin: left center;
+            transform: scale(0);
+            opacity: 0;
+        }
+
+        .leaf.right {
+            border-radius: 40px 0 40px 0;
+            left: auto;
+            right: 50%;
+            transform-origin: right center;
+            bottom: 80px;
+        }
+
+        /* Flower Head Container */
+        .flower-head {
+            position: absolute;
+            bottom: 200px; /* Top of stem */
+            left: 50%;
+            width: 100px;
+            height: 100px;
+            transform: translateX(-50%) scale(0);
+            transform-origin: bottom center;
+            opacity: 0;
+        }
+
+        /* Petals */
+        .petal {
+            position: absolute;
+            bottom: 0;
+            width: 40px;
+            height: 70px;
+            background: linear-gradient(to top, #e91e63, #f48fb1);
+            border-radius: 50% 50% 0 0;
+            left: 50%;
+            transform-origin: bottom center;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 0 10px rgba(233, 30, 99, 0.3);
+        }
+
+        /* Individual Petal Styling & Animation */
+        .petal:nth-child(1) { /* Center */
+            transform: translateX(-50%) rotate(0deg);
+            z-index: 3;
+            height: 80px;
+        }
+        
+        .petal:nth-child(2) { /* Left inner */
+            transform: translateX(-50%) rotate(-20deg);
+            z-index: 2;
+            background: linear-gradient(to top, #d81b60, #f06292);
+        }
+
+        .petal:nth-child(3) { /* Right inner */
+            transform: translateX(-50%) rotate(20deg);
+            z-index: 2;
+            background: linear-gradient(to top, #d81b60, #f06292);
+        }
+
+        .petal:nth-child(4) { /* Left outer */
+            transform: translateX(-50%) rotate(-45deg);
+            z-index: 1;
+            height: 60px;
+            background: linear-gradient(to top, #c2185b, #ec407a);
+        }
+
+        .petal:nth-child(5) { /* Right outer */
+            transform: translateX(-50%) rotate(45deg);
+            z-index: 1;
+            height: 60px;
+            background: linear-gradient(to top, #c2185b, #ec407a);
+        }
+
+
+        /* --- ANIMATION CLASSES --- */
+        .anim-grow-stem {
+            /* Handled by default keyframe below */
+        }
+
+        .anim-bloom-head {
+            animation: bloomHead 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards 1s; /* Starts after stem */
+        }
+
+        .anim-leaf-left {
+            animation: growLeaf 0.8s ease forwards 0.5s;
+        }
+
+        .anim-leaf-right {
+            animation: growLeaf 0.8s ease forwards 0.8s;
+        }
+
+        .anim-text {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes growStem {
+            to { height: 200px; }
+        }
+
+        @keyframes growLeaf {
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes bloomHead {
+            to { transform: translateX(-50%) scale(1.5); opacity: 1; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="start-screen">
+            <button class="btn-open" id="startBtn">I have a surprise for you</button>
+        </div>
+
+        <div class="flower-wrapper" id="flower">
+            <div class="stem"></div>
+            <div class="leaf"></div>
+            <div class="leaf right"></div>
+            <div class="flower-head" id="head">
+                <div class="petal"></div>
+                <div class="petal"></div>
+                <div class="petal"></div>
+                <div class="petal"></div>
+                <div class="petal"></div>
+            </div>
+        </div>
+
+        <h1 id="titleText">Happy Birthday!</h1>
+        <p id="msgText">Since you asked for flowers, I coded this one just for you so it never dies. <br> Hope you have the most beautiful day, Gayu Love you.</p>
+    </div>
+
+    <script>
+        const startBtn = document.getElementById('startBtn');
+        const startScreen = document.getElementById('start-screen');
+        const flower = document.getElementById('flower');
+        const head = document.getElementById('head');
+        const leaves = document.querySelectorAll('.leaf');
+        const titleText = document.getElementById('titleText');
+        const msgText = document.getElementById('msgText');
+
+        startBtn.addEventListener('click', () => {
+            // Hide Button
+            startScreen.classList.add('hidden');
+            
+            // Show Flower Container
+            flower.style.display = 'flex';
+            
+            // Add Animation Classes
+            // 1. Stem grows automatically due to CSS animation on .stem
+            
+            // 2. Animate Leaves
+            leaves[0].classList.add('anim-leaf-left');
+            leaves[1].classList.add('anim-leaf-right');
+
+            // 3. Bloom Head
+            head.classList.add('anim-bloom-head');
+
+            // 4. Show Text after bloom finishes
+            setTimeout(() => {
+                titleText.classList.add('anim-text');
+                msgText.classList.add('anim-text');
+                launchConfetti();
+            }, 2000);
+        });
+
+        function launchConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) { return clearInterval(interval); }
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+    </script>
+</body>
+</html>
